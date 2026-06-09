@@ -15,7 +15,7 @@
   <style>
     :root {
       --akademiet-green: #347d76;
-      --akademiet-orange: #f08920;
+      --akademiet-orange: #ed7b01;
       --text: #222;
       --muted-text: #555;
       --border: #e1e1e1;
@@ -42,28 +42,49 @@
       margin: 0 auto;
     }
 
+    .top-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .header-text {
+      flex: 1;
+    }
+
+    .logo {
+      width: 110px;
+      height: auto;
+      flex: 0 0 auto;
+      margin-top: 2px;
+    }
+
     h1,
     h2,
     h3 {
       font-family: "Oswald", Arial, sans-serif;
-      color: var(--text);
       line-height: 1.2;
     }
 
     h1 {
-      margin: 0 0 14px;
+      margin: 0 0 10px;
       font-size: 2rem;
       letter-spacing: 0.5px;
+      color: var(--akademiet-orange);
     }
 
     h2 {
       margin: 0 0 14px;
       font-size: 1.35rem;
+      color: var(--text);
     }
 
     h3 {
       margin: 0 0 10px;
       font-size: 1.15rem;
+      color: var(--text);
     }
 
     p {
@@ -74,19 +95,6 @@
       border: none;
       border-top: 1px solid var(--border);
       margin: 0 0 18px;
-    }
-
-    .intro {
-      background: var(--green-bg);
-      border-left: 6px solid var(--akademiet-green);
-      padding: 14px 16px;
-      border-radius: 8px;
-      margin-bottom: 18px;
-      color: var(--text);
-    }
-
-    .intro p:last-child {
-      margin-bottom: 0;
     }
 
     .section {
@@ -297,8 +305,16 @@
         padding: 14px;
       }
 
+      .top-header {
+        gap: 12px;
+      }
+
+      .logo {
+        width: 82px;
+      }
+
       h1 {
-        font-size: 1.75rem;
+        font-size: 1.55rem;
       }
 
       .section {
@@ -325,7 +341,8 @@
         padding: 0;
       }
 
-      .intro,
+      .top-header,
+      hr,
       .section:not(.print-section),
       .actions,
       .search,
@@ -360,12 +377,23 @@
 
 <body>
   <main class="app">
-    <h1>EKSAMENSPLANLEGGER</h1>
-      
-      <p>
-        Velg ett eller flere semestre, søk etter fag, huk av fagene du ønsker å ta,
-        og generer en ryddig eksamensliste.
-      </p>
+    <div class="top-header">
+      <div class="header-text">
+        <h1>EKSAMENSPLANLEGGER</h1>
+
+        <p>
+          Velg ett eller flere semestre, søk etter fag, huk av fagene du ønsker å ta,
+          og generer en ryddig eksamensliste.
+        </p>
+      </div>
+
+      <img
+        class="logo"
+        src="akademiet_oransje_rgb.png"
+        alt="Akademiet-logo"
+      >
+    </div>
+
     <hr>
 
     <section class="section">
