@@ -53,6 +53,7 @@
     h1 {
       margin: 0 0 14px;
       font-size: 2rem;
+      letter-spacing: 0.5px;
     }
 
     h2 {
@@ -67,6 +68,12 @@
 
     p {
       margin: 0 0 12px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 0 18px;
     }
 
     .intro {
@@ -137,9 +144,47 @@
     }
 
     .subject-list {
+      margin-top: 12px;
+    }
+
+    .semester-columns {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .semester-column {
+      background: #ffffff;
+      border: 1px solid #d8d8d8;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .semester-column-header {
+      background: var(--green-bg);
+      border-bottom: 3px solid var(--akademiet-green);
+      padding: 10px 12px;
+    }
+
+    .semester-column-header h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .semester-column-count {
+      display: block;
+      margin-top: 3px;
+      font-size: 0.82rem;
+      color: var(--muted-text);
+      font-family: "Roboto", Arial, sans-serif;
+      font-weight: 400;
+    }
+
+    .semester-subjects {
+      display: grid;
+      gap: 9px;
+      padding: 10px;
     }
 
     .subject-card {
@@ -149,9 +194,9 @@
       background: var(--white);
       border: 1px solid #ddd;
       border-radius: 8px;
-      padding: 11px 12px;
+      padding: 10px 11px;
       cursor: pointer;
-      min-height: 94px;
+      min-height: 88px;
     }
 
     .subject-card:hover {
@@ -171,9 +216,9 @@
     }
 
     .subject-meta {
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       color: #444;
-      line-height: 1.38;
+      line-height: 1.36;
     }
 
     .actions {
@@ -270,7 +315,7 @@
         width: 100%;
       }
 
-      .subject-list {
+      .semester-columns {
         grid-template-columns: 1fr;
       }
     }
@@ -316,13 +361,12 @@
 <body>
   <main class="app">
     <h1>EKSAMENSPLANLEGGER</h1>
-<hr>
-    <div class>
+      
       <p>
-        Velg ett eller flere semestre, huk av fagene du ønsker å ta,
+        Velg ett eller flere semestre, søk etter fag, huk av fagene du ønsker å ta,
         og generer en ryddig eksamensliste.
       </p>
-    </div>
+    <hr>
 
     <section class="section">
       <h2>1. Velg semester</h2>
@@ -336,10 +380,10 @@
         id="sok"
         class="search"
         type="text"
-        placeholder="Søk etter fag, fagkode eller dato..."
+        placeholder="Begynn å skrive fag, fagkode eller dato..."
       >
 
-      <div id="status" class="status">Velg semester for å vise fag.</div>
+      <div id="status" class="status">Velg semester og begynn å skrive for å vise fag.</div>
       <div id="fagliste" class="subject-list"></div>
     </section>
 
@@ -482,7 +526,7 @@
       );
 
       alleFag = alleSemesterData.flat();
-      statusfelt.textContent = "Velg semester for å vise fag.";
+      statusfelt.textContent = "Velg semester og begynn å skrive for å vise fag.";
     }
 
     function fagMatcherSok(fag, soketekst) {
@@ -501,21 +545,67 @@
       return samletTekst.includes(soketekst);
     }
 
+    function grupperFagEtterSemester(fagArray) {
+      return fagArray.reduce((grupper, fag) => {
+        if (!grupper[fag.semesterId]) {
+          grupper[fag.semesterId] = {
+            semesterNavn: fag.semesterNavn,
+            fag: []
+          };
+        }
+
+        grupper[fag.semesterId].fag.push(fag);
+        return grupper;
+      }, {});
+    }
+
+    function lagFagkortHTML(fag) {
+      const checked = valgteFag.has(fag.id) ? "checked" : "";
+
+      return `
+        <label class="subject-card">
+          <input type="checkbox" value="${escapeHTML(fag.id)}" ${checked}>
+          <div>
+            <div class="subject-title">${escapeHTML(fag.fag)}</div>
+            <div class="subject-meta">
+              ${fag.muntlig ? `<strong>Muntlig:</strong> ${escapeHTML(fag.muntlig)}<br>` : ""}
+              ${
+                fag.skriftlig1
+                  ? `<strong>Skriftlig:</strong> ${escapeHTML(fag.skriftlig1)}${fag.dato1 ? ` – ${escapeHTML(fag.dato1)}` : ""}<br>`
+                  : ""
+              }
+              ${
+                fag.skriftlig2
+                  ? `<strong>Skriftlig:</strong> ${escapeHTML(fag.skriftlig2)}${fag.dato2 ? ` – ${escapeHTML(fag.dato2)}` : ""}`
+                  : ""
+              }
+            </div>
+          </div>
+        </label>
+      `;
+    }
+
     function visFagliste() {
       const soketekst = sok.value.trim().toLowerCase();
 
+      if (valgteSemester.size === 0) {
+        fagliste.innerHTML = "";
+        statusfelt.textContent = "Velg minst ett semester først.";
+        return;
+      }
+
+      if (soketekst.length === 0) {
+        fagliste.innerHTML = "";
+        statusfelt.textContent = "Begynn å skrive for å vise fag.";
+        return;
+      }
+
       const filtrerteFag = alleFag.filter(fag => {
         const semesterErValgt = valgteSemester.has(fag.semesterId);
-        const matcherSok = !soketekst || fagMatcherSok(fag, soketekst);
+        const matcherSok = fagMatcherSok(fag, soketekst);
 
         return semesterErValgt && matcherSok;
       });
-
-      if (valgteSemester.size === 0) {
-        fagliste.innerHTML = "";
-        statusfelt.textContent = "Velg semester for å vise fag.";
-        return;
-      }
 
       if (filtrerteFag.length === 0) {
         fagliste.innerHTML = "";
@@ -523,36 +613,35 @@
         return;
       }
 
+      const gruppert = grupperFagEtterSemester(filtrerteFag);
+      const semesterRekkefolge = semesterFiler
+        .map(semester => semester.id)
+        .filter(id => gruppert[id]);
+
       statusfelt.textContent = `${filtrerteFag.length} fag funnet.`;
 
-      fagliste.innerHTML = filtrerteFag
-        .map(fag => {
-          const checked = valgteFag.has(fag.id) ? "checked" : "";
+      fagliste.innerHTML = `
+        <div class="semester-columns">
+          ${semesterRekkefolge.map(semesterId => {
+            const gruppe = gruppert[semesterId];
 
-          return `
-            <label class="subject-card">
-              <input type="checkbox" value="${escapeHTML(fag.id)}" ${checked}>
-              <div>
-                <div class="subject-title">${escapeHTML(fag.fag)}</div>
-                <div class="subject-meta">
-                  <strong>Semester:</strong> ${escapeHTML(fag.semesterNavn)}<br>
-                  ${fag.muntlig ? `<strong>Muntlig:</strong> ${escapeHTML(fag.muntlig)}<br>` : ""}
-                  ${
-                    fag.skriftlig1
-                      ? `<strong>Skriftlig:</strong> ${escapeHTML(fag.skriftlig1)}${fag.dato1 ? ` – ${escapeHTML(fag.dato1)}` : ""}<br>`
-                      : ""
-                  }
-                  ${
-                    fag.skriftlig2
-                      ? `<strong>Skriftlig:</strong> ${escapeHTML(fag.skriftlig2)}${fag.dato2 ? ` – ${escapeHTML(fag.dato2)}` : ""}`
-                      : ""
-                  }
+            return `
+              <div class="semester-column">
+                <div class="semester-column-header">
+                  <h3>
+                    ${escapeHTML(gruppe.semesterNavn)}
+                    <span class="semester-column-count">${gruppe.fag.length} treff</span>
+                  </h3>
+                </div>
+
+                <div class="semester-subjects">
+                  ${gruppe.fag.map(lagFagkortHTML).join("")}
                 </div>
               </div>
-            </label>
-          `;
-        })
-        .join("");
+            `;
+          }).join("")}
+        </div>
+      `;
 
       fagliste.querySelectorAll("input").forEach(input => {
         input.addEventListener("change", () => {
