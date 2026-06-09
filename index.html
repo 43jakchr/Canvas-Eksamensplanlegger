@@ -1,1 +1,688 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eksamensplanlegger</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    :root {
+      --akademiet-green: #347d76;
+      --akademiet-orange: #f08920;
+      --text: #222;
+      --muted-text: #555;
+      --border: #e1e1e1;
+      --light-bg: #f7f7f7;
+      --green-bg: #e6f1f0;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: var(--white);
+      color: var(--text);
+      font-family: "Roboto", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .app {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: "Oswald", Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 2.1rem;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.45rem;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .intro {
+      background: var(--green-bg);
+      border-left: 6px solid var(--akademiet-green);
+      padding: 16px 18px;
+      border-radius: 8px;
+      margin-bottom: 22px;
+      color: var(--text);
+    }
+
+    .intro p:last-child {
+      margin-bottom: 0;
+    }
+
+    .section {
+      background: var(--light-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .semester-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .semester-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 1px solid #d8d8d8;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .semester-option:hover {
+      border-color: var(--akademiet-green);
+    }
+
+    .semester-option input {
+      margin: 0;
+    }
+
+    .search {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-family: "Roboto", Arial, sans-serif;
+    }
+
+    .search:focus {
+      outline: 2px solid rgba(52, 125, 118, 0.25);
+      border-color: var(--akademiet-green);
+    }
+
+    .status {
+      margin-bottom: 12px;
+      color: var(--muted-text);
+    }
+
+    .subject-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .subject-card {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: var(--white);
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+
+    .subject-card:hover {
+      border-color: var(--akademiet-green);
+    }
+
+    .subject-card input {
+      margin-top: 4px;
+      flex: 0 0 auto;
+    }
+
+    .subject-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .subject-meta {
+      font-size: 0.93rem;
+      color: #444;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      background: var(--akademiet-green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 1rem;
+      font-family: "Roboto", Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    button.secondary {
+      background: var(--akademiet-orange);
+    }
+
+    button.neutral {
+      background: #555;
+    }
+
+    .plan-output {
+      display: none;
+      background: var(--white);
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+
+    .plan-output h2 {
+      margin-bottom: 18px;
+    }
+
+    .semester-heading {
+      border-bottom: 2px solid var(--akademiet-green);
+      padding-bottom: 4px;
+      margin-top: 22px;
+      margin-bottom: 10px;
+    }
+
+    .plan-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .plan-item:last-child {
+      border-bottom: none;
+    }
+
+    .empty {
+      color: #777;
+      font-style: italic;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .section {
+        padding: 15px;
+      }
+
+      .semester-grid,
+      .actions {
+        flex-direction: column;
+      }
+
+      .semester-option,
+      button {
+        width: 100%;
+      }
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+
+      .intro,
+      .section:not(.print-section),
+      .actions,
+      .search,
+      #valgtTeller {
+        display: none !important;
+      }
+
+      .app {
+        max-width: none;
+      }
+
+      .print-section {
+        border: none;
+        background: white;
+        padding: 0;
+      }
+
+      .print-section > h2 {
+        display: none;
+      }
+
+      .plan-output {
+        display: block !important;
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <h1>Eksamensplanlegger</h1>
+
+    <div class="intro">
+      <p>
+        Velg ett eller flere semestre, huk av fagene du ønsker å ta,
+        og generer en ryddig eksamensliste.
+      </p>
+    </div>
+
+    <section class="section">
+      <h2>1. Velg semester</h2>
+      <div id="semesterValg" class="semester-grid"></div>
+    </section>
+
+    <section class="section">
+      <h2>2. Velg fag</h2>
+
+      <input
+        id="sok"
+        class="search"
+        type="text"
+        placeholder="Søk etter fag, fagkode eller dato..."
+      >
+
+      <div id="status" class="status">Velg semester for å vise fag.</div>
+      <div id="fagliste" class="subject-list"></div>
+    </section>
+
+    <section class="section print-section">
+      <h2>3. Generer liste</h2>
+
+      <p id="valgtTeller">Ingen fag valgt.</p>
+
+      <div class="actions">
+        <button id="genererKnapp" type="button">Generer eksamensliste</button>
+        <button id="kopierKnapp" class="secondary" type="button">Kopier liste</button>
+        <button id="skrivUtKnapp" class="neutral" type="button">Skriv ut</button>
+        <button id="nullstillKnapp" class="neutral" type="button">Nullstill valg</button>
+      </div>
+
+      <div id="planOutput" class="plan-output"></div>
+    </section>
+  </main>
+
+  <script>
+    const semesterFiler = [
+      {
+        id: "H2026",
+        navn: "Høst 2026",
+        url: "data/FagkoderH2026.csv"
+      },
+      {
+        id: "H2027",
+        navn: "Høst 2027",
+        url: "data/FagkoderH2027.csv"
+      },
+      {
+        id: "V2026",
+        navn: "Vår 2026",
+        url: "data/FagkoderV2026.csv"
+      },
+      {
+        id: "V2027",
+        navn: "Vår 2027",
+        url: "data/FagkoderV2027.csv"
+      }
+    ];
+
+    let alleFag = [];
+    let valgteSemester = new Set();
+    let valgteFag = new Map();
+
+    const semesterValg = document.getElementById("semesterValg");
+    const fagliste = document.getElementById("fagliste");
+    const statusfelt = document.getElementById("status");
+    const sok = document.getElementById("sok");
+    const valgtTeller = document.getElementById("valgtTeller");
+    const planOutput = document.getElementById("planOutput");
+
+    function escapeHTML(tekst) {
+      return String(tekst || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function lagId(fag) {
+      return [
+        fag.semesterId,
+        fag.fag,
+        fag.muntlig,
+        fag.skriftlig1,
+        fag.dato1,
+        fag.skriftlig2,
+        fag.dato2
+      ].join("-");
+    }
+
+    function parseCSV(csvText, semester) {
+      const lines = csvText.trim().split(/\r?\n/);
+      const headers = lines[0].split(";").map(header => header.trim());
+
+      return lines
+        .slice(1)
+        .filter(line => line.trim() !== "")
+        .map(line => {
+          const values = line.split(";").map(value => value.trim());
+          const obj = {};
+
+          headers.forEach((header, index) => {
+            obj[header] = values[index] || "";
+          });
+
+          obj.semesterId = semester.id;
+          obj.semesterNavn = semester.navn;
+          obj.id = lagId(obj);
+
+          return obj;
+        });
+    }
+
+    function byggSemesterValg() {
+      semesterValg.innerHTML = semesterFiler
+        .map(semester => {
+          return `
+            <label class="semester-option">
+              <input type="checkbox" value="${escapeHTML(semester.id)}">
+              ${escapeHTML(semester.navn)}
+            </label>
+          `;
+        })
+        .join("");
+
+      semesterValg.querySelectorAll("input").forEach(input => {
+        input.addEventListener("change", () => {
+          if (input.checked) {
+            valgteSemester.add(input.value);
+          } else {
+            valgteSemester.delete(input.value);
+          }
+
+          visFagliste();
+        });
+      });
+    }
+
+    async function hentAlleFag() {
+      statusfelt.textContent = "Laster inn fag...";
+
+      const alleSemesterData = await Promise.all(
+        semesterFiler.map(async semester => {
+          const response = await fetch(semester.url);
+
+          if (!response.ok) {
+            throw new Error(`Kunne ikke laste ${semester.url}`);
+          }
+
+          const csvText = await response.text();
+          return parseCSV(csvText, semester);
+        })
+      );
+
+      alleFag = alleSemesterData.flat();
+      statusfelt.textContent = "Velg semester for å vise fag.";
+    }
+
+    function fagMatcherSok(fag, soketekst) {
+      const samletTekst = [
+        fag.fag,
+        fag.muntlig,
+        fag.skriftlig1,
+        fag.dato1,
+        fag.skriftlig2,
+        fag.dato2,
+        fag.semesterNavn
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return samletTekst.includes(soketekst);
+    }
+
+    function visFagliste() {
+      const soketekst = sok.value.trim().toLowerCase();
+
+      const filtrerteFag = alleFag.filter(fag => {
+        const semesterErValgt = valgteSemester.has(fag.semesterId);
+        const matcherSok = !soketekst || fagMatcherSok(fag, soketekst);
+
+        return semesterErValgt && matcherSok;
+      });
+
+      if (valgteSemester.size === 0) {
+        fagliste.innerHTML = "";
+        statusfelt.textContent = "Velg semester for å vise fag.";
+        return;
+      }
+
+      if (filtrerteFag.length === 0) {
+        fagliste.innerHTML = "";
+        statusfelt.textContent = "Ingen fag funnet.";
+        return;
+      }
+
+      statusfelt.textContent = `${filtrerteFag.length} fag funnet.`;
+
+      fagliste.innerHTML = filtrerteFag
+        .map(fag => {
+          const checked = valgteFag.has(fag.id) ? "checked" : "";
+
+          return `
+            <label class="subject-card">
+              <input type="checkbox" value="${escapeHTML(fag.id)}" ${checked}>
+              <div>
+                <div class="subject-title">${escapeHTML(fag.fag)}</div>
+                <div class="subject-meta">
+                  <strong>Semester:</strong> ${escapeHTML(fag.semesterNavn)}<br>
+                  ${fag.muntlig ? `<strong>Muntlig:</strong> ${escapeHTML(fag.muntlig)}<br>` : ""}
+                  ${
+                    fag.skriftlig1
+                      ? `<strong>Skriftlig:</strong> ${escapeHTML(fag.skriftlig1)}${fag.dato1 ? ` – ${escapeHTML(fag.dato1)}` : ""}<br>`
+                      : ""
+                  }
+                  ${
+                    fag.skriftlig2
+                      ? `<strong>Skriftlig:</strong> ${escapeHTML(fag.skriftlig2)}${fag.dato2 ? ` – ${escapeHTML(fag.dato2)}` : ""}`
+                      : ""
+                  }
+                </div>
+              </div>
+            </label>
+          `;
+        })
+        .join("");
+
+      fagliste.querySelectorAll("input").forEach(input => {
+        input.addEventListener("change", () => {
+          const fag = alleFag.find(item => item.id === input.value);
+
+          if (input.checked && fag) {
+            valgteFag.set(fag.id, fag);
+          } else {
+            valgteFag.delete(input.value);
+          }
+
+          oppdaterValgtTeller();
+        });
+      });
+    }
+
+    function oppdaterValgtTeller() {
+      const antall = valgteFag.size;
+
+      valgtTeller.textContent =
+        antall === 0
+          ? "Ingen fag valgt."
+          : `${antall} fag valgt.`;
+    }
+
+    function grupperValgteFag() {
+      const fag = Array.from(valgteFag.values());
+
+      return fag.reduce((grupper, item) => {
+        if (!grupper[item.semesterNavn]) {
+          grupper[item.semesterNavn] = [];
+        }
+
+        grupper[item.semesterNavn].push(item);
+        return grupper;
+      }, {});
+    }
+
+    function genererPlanHTML() {
+      if (valgteFag.size === 0) {
+        planOutput.style.display = "block";
+        planOutput.innerHTML = `<p class="empty">Du har ikke valgt noen fag ennå.</p>`;
+        return;
+      }
+
+      const gruppert = grupperValgteFag();
+
+      let html = `<h2>Min eksamensplan</h2>`;
+
+      Object.keys(gruppert).forEach(semester => {
+        html += `<h3 class="semester-heading">${escapeHTML(semester)}</h3>`;
+
+        gruppert[semester].forEach(fag => {
+          html += `
+            <div class="plan-item">
+              <strong>${escapeHTML(fag.fag)}</strong><br>
+              ${fag.muntlig ? `Muntlig: ${escapeHTML(fag.muntlig)}<br>` : ""}
+              ${
+                fag.skriftlig1
+                  ? `Skriftlig: ${escapeHTML(fag.skriftlig1)}${fag.dato1 ? ` – ${escapeHTML(fag.dato1)}` : ""}<br>`
+                  : ""
+              }
+              ${
+                fag.skriftlig2
+                  ? `Skriftlig: ${escapeHTML(fag.skriftlig2)}${fag.dato2 ? ` – ${escapeHTML(fag.dato2)}` : ""}`
+                  : ""
+              }
+            </div>
+          `;
+        });
+      });
+
+      planOutput.style.display = "block";
+      planOutput.innerHTML = html;
+    }
+
+    function genererPlanTekst() {
+      if (valgteFag.size === 0) {
+        return "Ingen fag valgt.";
+      }
+
+      const gruppert = grupperValgteFag();
+      let tekst = "Min eksamensplan\n\n";
+
+      Object.keys(gruppert).forEach(semester => {
+        tekst += `${semester}\n`;
+
+        gruppert[semester].forEach(fag => {
+          tekst += `\n${fag.fag}\n`;
+
+          if (fag.muntlig) {
+            tekst += `Muntlig: ${fag.muntlig}\n`;
+          }
+
+          if (fag.skriftlig1) {
+            tekst += `Skriftlig: ${fag.skriftlig1}${fag.dato1 ? ` – ${fag.dato1}` : ""}\n`;
+          }
+
+          if (fag.skriftlig2) {
+            tekst += `Skriftlig: ${fag.skriftlig2}${fag.dato2 ? ` – ${fag.dato2}` : ""}\n`;
+          }
+        });
+
+        tekst += "\n";
+      });
+
+      return tekst;
+    }
+
+    function nullstillValg() {
+      valgteFag.clear();
+      planOutput.style.display = "none";
+      planOutput.innerHTML = "";
+
+      oppdaterValgtTeller();
+      visFagliste();
+    }
+
+    document.getElementById("genererKnapp").addEventListener("click", genererPlanHTML);
+
+    document.getElementById("kopierKnapp").addEventListener("click", async () => {
+      const tekst = genererPlanTekst();
+
+      try {
+        await navigator.clipboard.writeText(tekst);
+        alert("Listen er kopiert.");
+      } catch (error) {
+        alert("Kunne ikke kopiere listen automatisk.");
+        console.error(error);
+      }
+    });
+
+    document.getElementById("skrivUtKnapp").addEventListener("click", () => {
+      genererPlanHTML();
+      window.print();
+    });
+
+    document.getElementById("nullstillKnapp").addEventListener("click", nullstillValg);
+
+    sok.addEventListener("input", visFagliste);
+
+    byggSemesterValg();
+
+    hentAlleFag().catch(error => {
+      statusfelt.textContent = "Kunne ikke laste faglisten. Sjekk at CSV-filene ligger i data-mappen og at filnavnene stemmer.";
+      console.error(error);
+    });
+  </script>
+</body>
+</html>
