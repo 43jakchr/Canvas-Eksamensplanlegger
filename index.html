@@ -285,6 +285,27 @@
       min-height: 1.4em;
     }
 
+    .warning-box {
+      display: none;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-left: 5px solid var(--akademiet-orange);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 10px 0 12px;
+      color: #222;
+      font-size: 0.92rem;
+    }
+
+    .warning-box strong {
+      color: var(--akademiet-orange);
+    }
+
+    .warning-box ul {
+      margin: 6px 0 0 18px;
+      padding: 0;
+    }
+
     .plan-output {
       display: none;
       background: var(--white);
@@ -378,7 +399,8 @@
       .inline-actions,
       .search,
       #valgtTeller,
-      #kopiStatus {
+      #kopiStatus,
+      #obsVarsel {
         display: none !important;
       }
 
@@ -458,6 +480,9 @@
       <h2>3. Din eksamensliste</h2>
 
       <p id="valgtTeller">Ingen fag valgt.</p>
+
+      <div id="obsVarsel" class="warning-box" aria-live="polite"></div>
+
       <p id="kopiStatus" class="copy-status" aria-live="polite"></p>
 
       <div id="planOutput" class="plan-output"></div>
@@ -506,6 +531,21 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+    }
+
+    function normaliserTekst(tekst) {
+      return String(tekst || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+    }
+
+    function normaliserDato(dato) {
+      return String(dato || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/\./g, "");
     }
 
     function lagId(fag) {
@@ -713,6 +753,7 @@
           }
 
           oppdaterValgtTeller();
+          oppdaterObsVarsel();
         });
       });
     }
@@ -724,6 +765,105 @@
         antall === 0
           ? "Ingen fag valgt."
           : `${antall} fag valgt.`;
+    }
+
+    function hentEksamenDatoer(fag) {
+      const datoer = [];
+
+      if (fag.dato1) {
+        datoer.push({
+          dato: fag.dato1,
+          normalisertDato: normaliserDato(fag.dato1),
+          fag: fag.fag,
+          kode: fag.skriftlig1 || "",
+          semester: fag.semesterNavn
+        });
+      }
+
+      if (fag.dato2) {
+        datoer.push({
+          dato: fag.dato2,
+          normalisertDato: normaliserDato(fag.dato2),
+          fag: fag.fag,
+          kode: fag.skriftlig2 || "",
+          semester: fag.semesterNavn
+        });
+      }
+
+      return datoer;
+    }
+
+    function oppdaterObsVarsel() {
+      const obsVarsel = document.getElementById("obsVarsel");
+      const valgte = Array.from(valgteFag.values());
+      const varsler = [];
+
+      const fagGrupper = valgte.reduce((grupper, fag) => {
+        const fagNavn = normaliserTekst(fag.fag);
+
+        if (!grupper[fagNavn]) {
+          grupper[fagNavn] = [];
+        }
+
+        grupper[fagNavn].push(fag);
+        return grupper;
+      }, {});
+
+      Object.values(fagGrupper).forEach(gruppe => {
+        const semester = [...new Set(gruppe.map(fag => fag.semesterNavn))];
+
+        if (semester.length > 1) {
+          varsler.push(
+            `Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
+          );
+        }
+      });
+
+      const alleDatoer = valgte.flatMap(hentEksamenDatoer);
+
+      const datoGrupper = alleDatoer.reduce((grupper, eksamen) => {
+        if (!eksamen.normalisertDato) {
+          return grupper;
+        }
+
+        if (!grupper[eksamen.normalisertDato]) {
+          grupper[eksamen.normalisertDato] = [];
+        }
+
+        grupper[eksamen.normalisertDato].push(eksamen);
+        return grupper;
+      }, {});
+
+      Object.values(datoGrupper).forEach(gruppe => {
+        const unikeFag = [...new Set(gruppe.map(eksamen => normaliserTekst(eksamen.fag)))];
+
+        if (gruppe.length > 1 && unikeFag.length > 1) {
+          const fagListe = gruppe
+            .map(eksamen => {
+              const kode = eksamen.kode ? ` (${escapeHTML(eksamen.kode)})` : "";
+              return `${escapeHTML(eksamen.fag)}${kode} – ${escapeHTML(eksamen.semester)}`;
+            })
+            .join(", ");
+
+          varsler.push(
+            `Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
+          );
+        }
+      });
+
+      if (varsler.length === 0) {
+        obsVarsel.style.display = "none";
+        obsVarsel.innerHTML = "";
+        return;
+      }
+
+      obsVarsel.style.display = "block";
+      obsVarsel.innerHTML = `
+        <strong>OBS:</strong>
+        <ul>
+          ${varsler.map(varsel => `<li>${varsel}</li>`).join("")}
+        </ul>
+      `;
     }
 
     function grupperValgteFag() {
@@ -782,6 +922,7 @@
 
       planOutput.style.display = "block";
       planOutput.innerHTML = html;
+      oppdaterObsVarsel();
     }
 
     function genererPlanTekst() {
@@ -853,6 +994,7 @@
       kopiStatus.textContent = "";
 
       oppdaterValgtTeller();
+      oppdaterObsVarsel();
       visFagliste();
     }
 
