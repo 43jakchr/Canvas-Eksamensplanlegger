@@ -105,6 +105,24 @@
       margin-bottom: 18px;
     }
 
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-title-row h2 {
+      margin: 0;
+    }
+
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
     .semester-grid {
       display: flex;
       flex-wrap: wrap;
@@ -229,13 +247,6 @@
       line-height: 1.36;
     }
 
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
     button {
       background: var(--akademiet-green);
       color: white;
@@ -257,6 +268,14 @@
 
     button.neutral {
       background: #555;
+    }
+
+    .small-button {
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      border-radius: 6px;
+      line-height: 1.2;
+      white-space: nowrap;
     }
 
     .copy-status {
@@ -321,13 +340,25 @@
         padding: 14px;
       }
 
-      .semester-grid,
-      .actions {
+      .section-title-row {
+        align-items: flex-start;
         flex-direction: column;
       }
 
-      .semester-option,
-      button {
+      .inline-actions {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .small-button {
+        width: auto;
+      }
+
+      .semester-grid {
+        flex-direction: column;
+      }
+
+      .semester-option {
         width: 100%;
       }
 
@@ -344,7 +375,7 @@
       .top-header,
       hr,
       .section:not(.print-section),
-      .actions,
+      .inline-actions,
       .search,
       #valgtTeller,
       #kopiStatus {
@@ -402,7 +433,15 @@
     </section>
 
     <section class="section">
-      <h2>2. Velg fag</h2>
+      <div class="section-title-row">
+        <h2>2. Velg fag</h2>
+
+        <div class="inline-actions">
+          <button id="genererKnapp" class="small-button" type="button">Generer</button>
+          <button id="kopierKnapp" class="small-button secondary" type="button">Kopier</button>
+          <button id="nullstillKnapp" class="small-button neutral" type="button">Tilbakestill</button>
+        </div>
+      </div>
 
       <input
         id="sok"
@@ -416,17 +455,9 @@
     </section>
 
     <section class="section print-section">
-      <h2>3. Generer liste</h2>
+      <h2>3. Din eksamensliste</h2>
 
       <p id="valgtTeller">Ingen fag valgt.</p>
-
-      <div class="actions">
-        <button id="genererKnapp" type="button">Generer eksamensliste</button>
-        <button id="kopierKnapp" class="secondary" type="button">Kopier liste</button>
-        <button id="skrivUtKnapp" class="neutral" type="button">Skriv ut</button>
-        <button id="nullstillKnapp" class="neutral" type="button">Nullstill valg</button>
-      </div>
-
       <p id="kopiStatus" class="copy-status" aria-live="polite"></p>
 
       <div id="planOutput" class="plan-output"></div>
@@ -790,6 +821,29 @@
       return tekst;
     }
 
+    function kopierTekstFallback(tekst) {
+      const textarea = document.createElement("textarea");
+      textarea.value = tekst;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.left = "-9999px";
+
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      let vellykket = false;
+
+      try {
+        vellykket = document.execCommand("copy");
+      } catch (error) {
+        vellykket = false;
+      }
+
+      document.body.removeChild(textarea);
+      return vellykket;
+    }
+
     function nullstillValg() {
       valgteFag.clear();
       planOutput.style.display = "none";
@@ -809,21 +863,29 @@
       const kopiStatus = document.getElementById("kopiStatus");
 
       try {
-        await navigator.clipboard.writeText(tekst);
-        kopiStatus.textContent = "Listen er kopiert.";
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(tekst);
+          kopiStatus.textContent = "Listen er kopiert.";
+        } else {
+          const kopiert = kopierTekstFallback(tekst);
 
-        setTimeout(() => {
-          kopiStatus.textContent = "";
-        }, 2500);
+          kopiStatus.textContent = kopiert
+            ? "Listen er kopiert."
+            : "Kunne ikke kopiere automatisk.";
+        }
       } catch (error) {
-        kopiStatus.textContent = "Kunne ikke kopiere listen automatisk.";
+        const kopiert = kopierTekstFallback(tekst);
+
+        kopiStatus.textContent = kopiert
+          ? "Listen er kopiert."
+          : "Kunne ikke kopiere automatisk.";
+
         console.error(error);
       }
-    });
 
-    document.getElementById("skrivUtKnapp").addEventListener("click", () => {
-      genererPlanHTML();
-      window.print();
+      setTimeout(() => {
+        kopiStatus.textContent = "";
+      }, 2500);
     });
 
     document.getElementById("nullstillKnapp").addEventListener("click", nullstillValg);
