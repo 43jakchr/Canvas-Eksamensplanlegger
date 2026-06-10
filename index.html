@@ -191,7 +191,8 @@
       margin-top: 12px;
     }
 
-    .semester-columns {
+    .semester-columns,
+    .selected-semester-columns {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
@@ -225,7 +226,8 @@
       font-weight: 400;
     }
 
-    .semester-subjects {
+    .semester-subjects,
+    .selected-subject-list {
       display: grid;
       gap: 9px;
       padding: 10px;
@@ -247,19 +249,22 @@
       border-color: var(--akademiet-green);
     }
 
-    .subject-card.duplicate-warning {
+    .subject-card.duplicate-warning,
+    .selected-subject-card.duplicate-warning {
       background: var(--warning-orange-bg);
       border-color: var(--warning-orange-border);
       border-left: 5px solid var(--warning-orange-border);
     }
 
-    .subject-card.date-warning {
+    .subject-card.date-warning,
+    .selected-subject-card.date-warning {
       background: var(--warning-red-bg);
       border-color: var(--warning-red-border);
       border-left: 5px solid var(--warning-red-border);
     }
 
-    .subject-card.combined-warning {
+    .subject-card.combined-warning,
+    .selected-subject-card.combined-warning {
       background: linear-gradient(90deg, var(--warning-red-bg), var(--warning-orange-bg));
       border-color: var(--warning-red-border);
       border-left: 5px solid var(--warning-red-border);
@@ -410,19 +415,6 @@
       margin-bottom: 18px;
     }
 
-    .semester-heading {
-      border-bottom: 2px solid var(--akademiet-green);
-      padding-bottom: 4px;
-      margin-top: 22px;
-      margin-bottom: 10px;
-    }
-
-    .selected-subject-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
     .selected-subject-card {
       display: flex;
       justify-content: space-between;
@@ -434,40 +426,23 @@
       padding: 10px 11px;
     }
 
-    .selected-subject-card.duplicate-warning {
-      background: var(--warning-orange-bg);
-      border-color: var(--warning-orange-border);
-      border-left: 5px solid var(--warning-orange-border);
-    }
-
-    .selected-subject-card.date-warning {
-      background: var(--warning-red-bg);
-      border-color: var(--warning-red-border);
-      border-left: 5px solid var(--warning-red-border);
-    }
-
-    .selected-subject-card.combined-warning {
-      background: linear-gradient(90deg, var(--warning-red-bg), var(--warning-orange-bg));
-      border-color: var(--warning-red-border);
-      border-left: 5px solid var(--warning-red-border);
-    }
-
     .remove-subject-button {
-      background: #555;
-      width: 26px;
-      height: 26px;
-      padding: 0;
-      font-size: 1.1rem;
+      background: transparent;
+      color: var(--akademiet-red);
+      width: auto;
+      height: auto;
+      padding: 0 4px;
+      font-size: 1.25rem;
       line-height: 1;
-      border-radius: 50%;
+      border-radius: 0;
       flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      font-weight: 700;
     }
 
     .remove-subject-button:hover {
-      background: var(--akademiet-red);
+      background: transparent;
+      color: var(--akademiet-black);
+      opacity: 1;
     }
 
     .empty {
@@ -524,7 +499,8 @@
         width: 100%;
       }
 
-      .semester-columns {
+      .semester-columns,
+      .selected-semester-columns {
         grid-template-columns: 1fr;
       }
 
@@ -1135,15 +1111,27 @@
 
       const gruppert = grupperValgteFag();
 
-      let html = `<h2>Min eksamensplan</h2>`;
+      let html = `
+        <h2>Min eksamensplan</h2>
+        <div class="selected-semester-columns">
+      `;
 
       semesterFiler
         .filter(semester => gruppert[semester.id])
         .forEach(semester => {
           const gruppe = gruppert[semester.id];
 
-          html += `<h3 class="semester-heading">${escapeHTML(gruppe.semesterNavn)}</h3>`;
-          html += `<div class="selected-subject-list">`;
+          html += `
+            <div class="semester-column">
+              <div class="semester-column-header">
+                <h3>
+                  ${escapeHTML(gruppe.semesterNavn)}
+                  <span class="semester-column-count">${gruppe.fag.length} valgt</span>
+                </h3>
+              </div>
+
+              <div class="selected-subject-list">
+          `;
 
           gruppe.fag.forEach(fag => {
             const varselKlasse = hentVarselKlasse(fag);
@@ -1177,8 +1165,13 @@
             `;
           });
 
-          html += `</div>`;
+          html += `
+              </div>
+            </div>
+          `;
         });
+
+      html += `</div>`;
 
       planOutput.style.display = "block";
       planOutput.innerHTML = html;
