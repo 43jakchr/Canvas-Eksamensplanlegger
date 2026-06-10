@@ -27,8 +27,6 @@
       --warning-orange-border: var(--akademiet-orange);
       --warning-red-bg: #fbe9e5;
       --warning-red-border: var(--akademiet-red);
-      --warning-yellow-bg: #fffbea;
-      --warning-yellow-border: var(--akademiet-yellow);
 
       --text: #222;
       --muted-text: #555;
@@ -49,6 +47,10 @@
       color: var(--text);
       font-family: "Roboto", Arial, sans-serif;
       line-height: 1.5;
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--akademiet-green);
     }
 
     .app {
@@ -332,28 +334,39 @@
 
     .warning-box {
       display: none;
-      background: var(--warning-yellow-bg);
-      border: 2px solid var(--warning-yellow-border);
-      border-left: 8px solid var(--warning-yellow-border);
+      background: #ffffff;
+      border: 1px solid #d8d8d8;
+      border-left: 6px solid var(--akademiet-red);
       border-radius: 10px;
       padding: 12px 14px;
       margin: 12px 0 14px;
       color: #222;
       font-size: 0.94rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
 
-    .warning-box strong {
+    .warning-box-title {
+      display: block;
+      margin-bottom: 8px;
+      font-family: "Oswald", Arial, sans-serif;
+      font-size: 1.05rem;
       color: var(--akademiet-red);
     }
 
     .warning-box ul {
-      margin: 8px 0 0 18px;
+      margin: 0;
       padding: 0;
+      list-style: none;
+    }
+
+    .warning-box li {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
     }
 
     .warning-box li + li {
-      margin-top: 6px;
+      margin-top: 8px;
     }
 
     .warning-label {
@@ -361,9 +374,11 @@
       color: #fff;
       border-radius: 999px;
       padding: 2px 8px;
-      margin-right: 6px;
-      font-size: 0.78rem;
+      margin-top: 1px;
+      font-size: 0.74rem;
       font-weight: 700;
+      white-space: nowrap;
+      flex: 0 0 auto;
     }
 
     .warning-label.same-subject-label {
@@ -372,6 +387,14 @@
 
     .warning-label.date-label {
       background: var(--akademiet-red);
+    }
+
+    .warning-message {
+      flex: 1 1 auto;
+    }
+
+    .warning-message strong {
+      color: var(--akademiet-red);
     }
 
     .plan-output {
@@ -430,15 +453,21 @@
     }
 
     .remove-subject-button {
-      background: #777;
-      padding: 5px 8px;
-      font-size: 0.78rem;
-      border-radius: 6px;
+      background: #555;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      font-size: 1.1rem;
+      line-height: 1;
+      border-radius: 50%;
       flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .remove-subject-button:hover {
-      background: #555;
+      background: var(--akademiet-red);
     }
 
     .empty {
@@ -500,11 +529,16 @@
       }
 
       .selected-subject-card {
-        flex-direction: column;
+        flex-direction: row;
       }
 
       .remove-subject-button {
         align-self: flex-start;
+      }
+
+      .warning-box li {
+        flex-direction: column;
+        gap: 4px;
       }
     }
 
@@ -601,7 +635,7 @@
       <div id="fagliste" class="subject-list"></div>
     </section>
 
-    <section class="section print-section">
+    <section id="eksamensliste" class="section print-section">
       <h2>3. Din eksamensliste</h2>
 
       <p id="valgtTeller">Ingen fag valgt.</p>
@@ -983,9 +1017,11 @@
             fag._duplikatVarsel = true;
           });
 
-          varsler.push(
-            `<span class="warning-label same-subject-label">SAMME FAG</span> Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
-          );
+          varsler.push({
+            type: "same",
+            label: "SAMME FAG",
+            message: `Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
+          });
         }
       });
 
@@ -1023,9 +1059,11 @@
             })
             .join(", ");
 
-          varsler.push(
-            `<span class="warning-label date-label">DATO</span> Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
-          );
+          varsler.push({
+            type: "date",
+            label: "DATO",
+            message: `Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
+          });
         }
       });
 
@@ -1040,9 +1078,20 @@
       }
 
       const varselHTML = `
-        <strong>OBS OBS:</strong>
+        <span class="warning-box-title">OBS OBS</span>
         <ul>
-          ${varsler.map(varsel => `<li>${varsel}</li>`).join("")}
+          ${varsler.map(varsel => {
+            const labelClass = varsel.type === "date"
+              ? "date-label"
+              : "same-subject-label";
+
+            return `
+              <li>
+                <span class="warning-label ${labelClass}">${varsel.label}</span>
+                <span class="warning-message">${varsel.message}</span>
+              </li>
+            `;
+          }).join("")}
         </ul>
       `;
 
@@ -1075,6 +1124,12 @@
       if (valgteFag.size === 0) {
         planOutput.style.display = "block";
         planOutput.innerHTML = `<p class="empty">Du har ikke valgt noen fag ennå.</p>`;
+
+        document.getElementById("eksamensliste").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
         return;
       }
 
@@ -1113,8 +1168,10 @@
                 <button
                   class="remove-subject-button"
                   type="button"
+                  aria-label="Fjern ${escapeHTML(fag.fag)}"
+                  title="Fjern"
                   data-remove-id="${escapeHTML(fag.id)}">
-                  Fjern
+                  ×
                 </button>
               </div>
             `;
@@ -1130,6 +1187,11 @@
         button.addEventListener("click", () => {
           fjernValgtFag(button.getAttribute("data-remove-id"));
         });
+      });
+
+      document.getElementById("eksamensliste").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
       });
     }
 
