@@ -16,6 +16,13 @@
     :root {
       --akademiet-green: #347d76;
       --akademiet-orange: #ed7b01;
+      --button-blue: #2563eb;
+
+      --warning-orange-bg: #fff3e6;
+      --warning-orange-border: #ed7b01;
+      --warning-red-bg: #fee2e2;
+      --warning-red-border: #dc2626;
+
       --text: #222;
       --muted-text: #555;
       --border: #e1e1e1;
@@ -229,6 +236,24 @@
       border-color: var(--akademiet-green);
     }
 
+    .subject-card.duplicate-warning {
+      background: var(--warning-orange-bg);
+      border-color: var(--warning-orange-border);
+      border-left: 5px solid var(--warning-orange-border);
+    }
+
+    .subject-card.date-warning {
+      background: var(--warning-red-bg);
+      border-color: var(--warning-red-border);
+      border-left: 5px solid var(--warning-red-border);
+    }
+
+    .subject-card.combined-warning {
+      background: linear-gradient(90deg, var(--warning-red-bg), var(--warning-orange-bg));
+      border-color: var(--warning-red-border);
+      border-left: 5px solid var(--warning-red-border);
+    }
+
     .subject-card input {
       margin-top: 4px;
       flex: 0 0 auto;
@@ -248,7 +273,6 @@
     }
 
     button {
-      background: var(--akademiet-green);
       color: white;
       border: none;
       border-radius: 8px;
@@ -262,12 +286,16 @@
       opacity: 0.92;
     }
 
-    button.secondary {
+    .button-generate {
       background: var(--akademiet-orange);
     }
 
-    button.neutral {
-      background: #555;
+    .button-copy {
+      background: var(--button-blue);
+    }
+
+    .button-reset {
+      background: var(--akademiet-green);
     }
 
     .small-button {
@@ -276,6 +304,13 @@
       border-radius: 6px;
       line-height: 1.2;
       white-space: nowrap;
+    }
+
+    .plan-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 10px 0 12px;
     }
 
     .copy-status {
@@ -287,23 +322,39 @@
 
     .warning-box {
       display: none;
-      background: #fff7ed;
-      border: 1px solid #fed7aa;
-      border-left: 5px solid var(--akademiet-orange);
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin: 10px 0 12px;
+      background: #fff3e6;
+      border: 2px solid var(--akademiet-orange);
+      border-left: 8px solid var(--akademiet-orange);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 12px 0 14px;
       color: #222;
-      font-size: 0.92rem;
+      font-size: 0.94rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .warning-box strong {
-      color: var(--akademiet-orange);
+      color: #b45309;
     }
 
     .warning-box ul {
-      margin: 6px 0 0 18px;
+      margin: 8px 0 0 18px;
       padding: 0;
+    }
+
+    .warning-box li + li {
+      margin-top: 6px;
+    }
+
+    .warning-label {
+      display: inline-block;
+      background: var(--akademiet-orange);
+      color: #fff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      margin-right: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
     }
 
     .plan-output {
@@ -326,13 +377,51 @@
       margin-bottom: 10px;
     }
 
-    .plan-item {
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
+    .selected-subject-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
     }
 
-    .plan-item:last-child {
-      border-bottom: none;
+    .selected-subject-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px 11px;
+    }
+
+    .selected-subject-card.duplicate-warning {
+      background: var(--warning-orange-bg);
+      border-color: var(--warning-orange-border);
+      border-left: 5px solid var(--warning-orange-border);
+    }
+
+    .selected-subject-card.date-warning {
+      background: var(--warning-red-bg);
+      border-color: var(--warning-red-border);
+      border-left: 5px solid var(--warning-red-border);
+    }
+
+    .selected-subject-card.combined-warning {
+      background: linear-gradient(90deg, var(--warning-red-bg), var(--warning-orange-bg));
+      border-color: var(--warning-red-border);
+      border-left: 5px solid var(--warning-red-border);
+    }
+
+    .remove-subject-button {
+      background: #777;
+      padding: 5px 8px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      flex: 0 0 auto;
+    }
+
+    .remove-subject-button:hover {
+      background: #555;
     }
 
     .empty {
@@ -386,6 +475,14 @@
       .semester-columns {
         grid-template-columns: 1fr;
       }
+
+      .selected-subject-card {
+        flex-direction: column;
+      }
+
+      .remove-subject-button {
+        align-self: flex-start;
+      }
     }
 
     @media print {
@@ -397,10 +494,12 @@
       hr,
       .section:not(.print-section),
       .inline-actions,
+      .plan-actions,
       .search,
       #valgtTeller,
       #kopiStatus,
-      #obsVarsel {
+      #obsVarsel,
+      .remove-subject-button {
         display: none !important;
       }
 
@@ -459,9 +558,8 @@
         <h2>2. Velg fag</h2>
 
         <div class="inline-actions">
-          <button id="genererKnapp" class="small-button" type="button">Generer</button>
-          <button id="kopierKnapp" class="small-button secondary" type="button">Kopier</button>
-          <button id="nullstillKnapp" class="small-button neutral" type="button">Tilbakestill</button>
+          <button id="genererKnapp" class="small-button button-generate" type="button">Generer</button>
+          <button id="nullstillKnapp" class="small-button button-reset" type="button">Tilbakestill</button>
         </div>
       </div>
 
@@ -480,6 +578,12 @@
       <h2>3. Din eksamensliste</h2>
 
       <p id="valgtTeller">Ingen fag valgt.</p>
+
+      <div class="plan-actions">
+        <button id="genererKnappNede" class="small-button button-generate" type="button">Generer</button>
+        <button id="kopierKnappNede" class="small-button button-copy" type="button">Kopier</button>
+        <button id="nullstillKnappNede" class="small-button button-reset" type="button">Tilbakestill</button>
+      </div>
 
       <div id="obsVarsel" class="warning-box" aria-live="polite"></div>
 
@@ -578,6 +682,8 @@
           obj.semesterId = semester.id;
           obj.semesterNavn = semester.navn;
           obj.id = lagId(obj);
+          obj._duplikatVarsel = false;
+          obj._datoVarsel = false;
 
           return obj;
         });
@@ -658,11 +764,31 @@
       }, {});
     }
 
+    function hentVarselKlasse(fag) {
+      const harDuplikat = fag._duplikatVarsel === true;
+      const harDatoKollisjon = fag._datoVarsel === true;
+
+      if (harDuplikat && harDatoKollisjon) {
+        return "combined-warning";
+      }
+
+      if (harDatoKollisjon) {
+        return "date-warning";
+      }
+
+      if (harDuplikat) {
+        return "duplicate-warning";
+      }
+
+      return "";
+    }
+
     function lagFagkortHTML(fag) {
       const checked = valgteFag.has(fag.id) ? "checked" : "";
+      const varselKlasse = hentVarselKlasse(fag);
 
       return `
-        <label class="subject-card">
+        <label class="subject-card ${varselKlasse}">
           <input type="checkbox" value="${escapeHTML(fag.id)}" ${checked}>
           <div>
             <div class="subject-title">${escapeHTML(fag.fag)}</div>
@@ -754,6 +880,7 @@
 
           oppdaterValgtTeller();
           oppdaterObsVarsel();
+          visFagliste();
         });
       });
     }
@@ -772,6 +899,7 @@
 
       if (fag.dato1) {
         datoer.push({
+          fagId: fag.id,
           dato: fag.dato1,
           normalisertDato: normaliserDato(fag.dato1),
           fag: fag.fag,
@@ -782,6 +910,7 @@
 
       if (fag.dato2) {
         datoer.push({
+          fagId: fag.id,
           dato: fag.dato2,
           normalisertDato: normaliserDato(fag.dato2),
           fag: fag.fag,
@@ -793,10 +922,19 @@
       return datoer;
     }
 
+    function nullstillFagVarsler() {
+      alleFag.forEach(fag => {
+        fag._duplikatVarsel = false;
+        fag._datoVarsel = false;
+      });
+    }
+
     function oppdaterObsVarsel() {
       const obsVarsel = document.getElementById("obsVarsel");
       const valgte = Array.from(valgteFag.values());
       const varsler = [];
+
+      nullstillFagVarsler();
 
       const fagGrupper = valgte.reduce((grupper, fag) => {
         const fagNavn = normaliserTekst(fag.fag);
@@ -813,8 +951,12 @@
         const semester = [...new Set(gruppe.map(fag => fag.semesterNavn))];
 
         if (semester.length > 1) {
+          gruppe.forEach(fag => {
+            fag._duplikatVarsel = true;
+          });
+
           varsler.push(
-            `Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
+            `<span class="warning-label">SAMME FAG</span> Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
           );
         }
       });
@@ -838,6 +980,14 @@
         const unikeFag = [...new Set(gruppe.map(eksamen => normaliserTekst(eksamen.fag)))];
 
         if (gruppe.length > 1 && unikeFag.length > 1) {
+          gruppe.forEach(eksamen => {
+            const valgtFag = valgte.find(fag => fag.id === eksamen.fagId);
+
+            if (valgtFag) {
+              valgtFag._datoVarsel = true;
+            }
+          });
+
           const fagListe = gruppe
             .map(eksamen => {
               const kode = eksamen.kode ? ` (${escapeHTML(eksamen.kode)})` : "";
@@ -846,7 +996,7 @@
             .join(", ");
 
           varsler.push(
-            `Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
+            `<span class="warning-label">DATO</span> Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
           );
         }
       });
@@ -859,7 +1009,7 @@
 
       obsVarsel.style.display = "block";
       obsVarsel.innerHTML = `
-        <strong>OBS:</strong>
+        <strong>OBS OBS:</strong>
         <ul>
           ${varsler.map(varsel => `<li>${varsel}</li>`).join("")}
         </ul>
@@ -883,6 +1033,8 @@
     }
 
     function genererPlanHTML() {
+      oppdaterObsVarsel();
+
       if (valgteFag.size === 0) {
         planOutput.style.display = "block";
         planOutput.innerHTML = `<p class="empty">Du har ikke valgt noen fag ennå.</p>`;
@@ -899,30 +1051,58 @@
           const gruppe = gruppert[semester.id];
 
           html += `<h3 class="semester-heading">${escapeHTML(gruppe.semesterNavn)}</h3>`;
+          html += `<div class="selected-subject-list">`;
 
           gruppe.fag.forEach(fag => {
+            const varselKlasse = hentVarselKlasse(fag);
+
             html += `
-              <div class="plan-item">
-                <strong>${escapeHTML(fag.fag)}</strong><br>
-                ${fag.muntlig ? `Muntlig: ${escapeHTML(fag.muntlig)}<br>` : ""}
-                ${
-                  fag.skriftlig1
-                    ? `Skriftlig: ${escapeHTML(fag.skriftlig1)}${fag.dato1 ? ` – ${escapeHTML(fag.dato1)}` : ""}<br>`
-                    : ""
-                }
-                ${
-                  fag.skriftlig2
-                    ? `Skriftlig: ${escapeHTML(fag.skriftlig2)}${fag.dato2 ? ` – ${escapeHTML(fag.dato2)}` : ""}`
-                    : ""
-                }
+              <div class="selected-subject-card ${varselKlasse}">
+                <div>
+                  <strong>${escapeHTML(fag.fag)}</strong><br>
+                  ${fag.muntlig ? `Muntlig: ${escapeHTML(fag.muntlig)}<br>` : ""}
+                  ${
+                    fag.skriftlig1
+                      ? `Skriftlig: ${escapeHTML(fag.skriftlig1)}${fag.dato1 ? ` – ${escapeHTML(fag.dato1)}` : ""}<br>`
+                      : ""
+                  }
+                  ${
+                    fag.skriftlig2
+                      ? `Skriftlig: ${escapeHTML(fag.skriftlig2)}${fag.dato2 ? ` – ${escapeHTML(fag.dato2)}` : ""}`
+                      : ""
+                  }
+                </div>
+
+                <button
+                  class="remove-subject-button"
+                  type="button"
+                  data-remove-id="${escapeHTML(fag.id)}">
+                  Fjern
+                </button>
               </div>
             `;
           });
+
+          html += `</div>`;
         });
 
       planOutput.style.display = "block";
       planOutput.innerHTML = html;
+
+      planOutput.querySelectorAll("[data-remove-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          fjernValgtFag(button.getAttribute("data-remove-id"));
+        });
+      });
+    }
+
+    function fjernValgtFag(fagId) {
+      valgteFag.delete(fagId);
+
+      oppdaterValgtTeller();
       oppdaterObsVarsel();
+      visFagliste();
+      genererPlanHTML();
     }
 
     function genererPlanTekst() {
@@ -985,22 +1165,7 @@
       return vellykket;
     }
 
-    function nullstillValg() {
-      valgteFag.clear();
-      planOutput.style.display = "none";
-      planOutput.innerHTML = "";
-
-      const kopiStatus = document.getElementById("kopiStatus");
-      kopiStatus.textContent = "";
-
-      oppdaterValgtTeller();
-      oppdaterObsVarsel();
-      visFagliste();
-    }
-
-    document.getElementById("genererKnapp").addEventListener("click", genererPlanHTML);
-
-    document.getElementById("kopierKnapp").addEventListener("click", async () => {
+    async function kopierListe() {
       const tekst = genererPlanTekst();
       const kopiStatus = document.getElementById("kopiStatus");
 
@@ -1028,9 +1193,28 @@
       setTimeout(() => {
         kopiStatus.textContent = "";
       }, 2500);
-    });
+    }
+
+    function nullstillValg() {
+      valgteFag.clear();
+      planOutput.style.display = "none";
+      planOutput.innerHTML = "";
+
+      const kopiStatus = document.getElementById("kopiStatus");
+      kopiStatus.textContent = "";
+
+      oppdaterValgtTeller();
+      oppdaterObsVarsel();
+      visFagliste();
+    }
+
+    document.getElementById("genererKnapp").addEventListener("click", genererPlanHTML);
+    document.getElementById("genererKnappNede").addEventListener("click", genererPlanHTML);
 
     document.getElementById("nullstillKnapp").addEventListener("click", nullstillValg);
+    document.getElementById("nullstillKnappNede").addEventListener("click", nullstillValg);
+
+    document.getElementById("kopierKnappNede").addEventListener("click", kopierListe);
 
     sok.addEventListener("input", visFagliste);
 
