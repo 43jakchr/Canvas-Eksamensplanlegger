@@ -14,14 +14,21 @@
 
   <style>
     :root {
-      --akademiet-green: #347d76;
       --akademiet-orange: #ed7b01;
-      --button-blue: #2563eb;
+      --akademiet-yellow: #fecf05;
+      --akademiet-blue: #212c60;
+      --akademiet-green: #347d76;
+      --akademiet-red: #77240e;
+      --akademiet-gray: #b0aeb7;
+      --akademiet-black: #000000;
+      --akademiet-white: #ffffff;
 
       --warning-orange-bg: #fff3e6;
-      --warning-orange-border: #ed7b01;
-      --warning-red-bg: #fee2e2;
-      --warning-red-border: #dc2626;
+      --warning-orange-border: var(--akademiet-orange);
+      --warning-red-bg: #fbe9e5;
+      --warning-red-border: var(--akademiet-red);
+      --warning-yellow-bg: #fffbea;
+      --warning-yellow-border: var(--akademiet-yellow);
 
       --text: #222;
       --muted-text: #555;
@@ -115,19 +122,21 @@
     .section-title-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
       margin-bottom: 14px;
     }
 
     .section-title-row h2 {
       margin: 0;
+      flex: 1 1 auto;
     }
 
     .inline-actions {
       display: flex;
+      justify-content: flex-end;
       gap: 8px;
       flex: 0 0 auto;
+      margin-left: auto;
     }
 
     .semester-grid {
@@ -291,7 +300,7 @@
     }
 
     .button-copy {
-      background: var(--button-blue);
+      background: var(--akademiet-blue);
     }
 
     .button-reset {
@@ -308,6 +317,7 @@
 
     .plan-actions {
       display: flex;
+      justify-content: flex-end;
       gap: 8px;
       flex-wrap: wrap;
       margin: 10px 0 12px;
@@ -322,9 +332,9 @@
 
     .warning-box {
       display: none;
-      background: #fff3e6;
-      border: 2px solid var(--akademiet-orange);
-      border-left: 8px solid var(--akademiet-orange);
+      background: var(--warning-yellow-bg);
+      border: 2px solid var(--warning-yellow-border);
+      border-left: 8px solid var(--warning-yellow-border);
       border-radius: 10px;
       padding: 12px 14px;
       margin: 12px 0 14px;
@@ -334,7 +344,7 @@
     }
 
     .warning-box strong {
-      color: #b45309;
+      color: var(--akademiet-red);
     }
 
     .warning-box ul {
@@ -348,13 +358,20 @@
 
     .warning-label {
       display: inline-block;
-      background: var(--akademiet-orange);
       color: #fff;
       border-radius: 999px;
       padding: 2px 8px;
       margin-right: 6px;
       font-size: 0.78rem;
       font-weight: 700;
+    }
+
+    .warning-label.same-subject-label {
+      background: var(--akademiet-orange);
+    }
+
+    .warning-label.date-label {
+      background: var(--akademiet-red);
     }
 
     .plan-output {
@@ -457,7 +474,13 @@
 
       .inline-actions {
         width: 100%;
+        justify-content: flex-start;
+        margin-left: 0;
         flex-wrap: wrap;
+      }
+
+      .plan-actions {
+        justify-content: flex-start;
       }
 
       .small-button {
@@ -499,6 +522,7 @@
       #valgtTeller,
       #kopiStatus,
       #obsVarsel,
+      #obsVarselTopp,
       .remove-subject-button {
         display: none !important;
       }
@@ -571,6 +595,9 @@
       >
 
       <div id="status" class="status">Velg semester og begynn å skrive for å vise fag.</div>
+
+      <div id="obsVarselTopp" class="warning-box" aria-live="polite"></div>
+
       <div id="fagliste" class="subject-list"></div>
     </section>
 
@@ -931,6 +958,7 @@
 
     function oppdaterObsVarsel() {
       const obsVarsel = document.getElementById("obsVarsel");
+      const obsVarselTopp = document.getElementById("obsVarselTopp");
       const valgte = Array.from(valgteFag.values());
       const varsler = [];
 
@@ -956,7 +984,7 @@
           });
 
           varsler.push(
-            `<span class="warning-label">SAMME FAG</span> Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
+            `<span class="warning-label same-subject-label">SAMME FAG</span> Samme fag er valgt i flere semestre: <strong>${escapeHTML(gruppe[0].fag)}</strong> (${semester.map(escapeHTML).join(", ")}).`
           );
         }
       });
@@ -996,24 +1024,33 @@
             .join(", ");
 
           varsler.push(
-            `<span class="warning-label">DATO</span> Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
+            `<span class="warning-label date-label">DATO</span> Mulig datokollisjon: <strong>${escapeHTML(gruppe[0].dato)}</strong> gjelder ${fagListe}.`
           );
         }
       });
 
       if (varsler.length === 0) {
-        obsVarsel.style.display = "none";
-        obsVarsel.innerHTML = "";
+        [obsVarsel, obsVarselTopp].forEach(boks => {
+          if (!boks) return;
+          boks.style.display = "none";
+          boks.innerHTML = "";
+        });
+
         return;
       }
 
-      obsVarsel.style.display = "block";
-      obsVarsel.innerHTML = `
+      const varselHTML = `
         <strong>OBS OBS:</strong>
         <ul>
           ${varsler.map(varsel => `<li>${varsel}</li>`).join("")}
         </ul>
       `;
+
+      [obsVarsel, obsVarselTopp].forEach(boks => {
+        if (!boks) return;
+        boks.style.display = "block";
+        boks.innerHTML = varselHTML;
+      });
     }
 
     function grupperValgteFag() {
